@@ -37,12 +37,18 @@ fun HomeScreen(onOpen: (AppScreen) -> Unit) {
             delay(250)
         }
     }
+    HomeContent(ar, onOpen)
+}
+
+/** Stateless home layout (also used for screenshots). */
+@Composable
+fun HomeContent(ar: ArCoreAvailability.Status, onOpen: (AppScreen) -> Unit) {
     val arOk = ar == ArCoreAvailability.Status.SUPPORTED || ar == ArCoreAvailability.Status.NOT_INSTALLED
     Column(
         Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("CAMIMU // ORIENT", color = Hud.Green, style = MaterialTheme.typography.headlineMedium)
+        Text("CamIMU", color = Hud.Green, style = MaterialTheme.typography.headlineMedium)
         Text("Yaw · Pitch · Roll from gyro + accelerometer + camera. No compass.", color = Hud.Text, style = MaterialTheme.typography.bodyMedium)
         Text(
             "Hold the phone still ~2 s when a mode starts. Yaw is relative to the start heading.",

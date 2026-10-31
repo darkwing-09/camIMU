@@ -9,7 +9,19 @@ Real-time **yaw / pitch / roll** for an Android phone using only the **gyroscope
 - The camera keeps yaw from drifting: it measures how the scene rotates, which corrects the gyro's bias.
   Moving people and blocked lenses are detected and ignored. The app falls back to gyro-only and shows lower confidence.
 
-Status: documentation phase. Build progress is tracked in [docs/Progress.md](docs/Progress.md).
+Status: **implemented**. All code builds, 83 JVM tests pass, lint is clean, and a synthetic end-to-end session matches
+truth (median yaw error 0.11°). **Not yet run on a phone.** The on-device checks are listed in
+[docs/Progress.md](docs/Progress.md) under "Device checklist".
+
+## Quick start (laptop + phone)
+```bash
+./scripts/verify.sh                 # guard + tests + build + lint (≈1–2 min warm)
+adb devices                         # phone with USB debugging → "device"
+./gradlew :app:installDebug
+adb shell am start -n com.camimu.orient/.MainActivity
+```
+In the app: open **CUSTOM**, hold the phone still ~2 s, then move. Point it at a detailed scene ≥ 2 m away.
+**REC** records a replayable session. **MARK** tags reference poses. **RESET YAW** zeroes the heading.
 
 ## Modes
 | Mode | What it does |
@@ -30,13 +42,24 @@ Status: documentation phase. Build progress is tracked in [docs/Progress.md](doc
 
 Details: [docs/Architecture.md](docs/Architecture.md). Full spec: [project.md](project.md).
 
+## Screenshots
+Rendered from the real Compose UI with Paparazzi (`./gradlew :app:recordPaparazziDebug`, then copied to `docs/screenshots/`).
+Camera views show a synthetic scene because no camera is available on the laptop; everything drawn on top is the app's HUD code.
+
+![overview](docs/screenshots/overview.png)
+
+## UI palette
+HUD style from the open-design.ai "HUD" design system (https://open-design.ai/systems/hud/):
+near-black `#0A0A0A` / `#111316` / `#1E2328`, phosphor green `#00FF41`, lime `#7FFF00`, plus amber `#FFB000` and red `#FF3B30` for
+MEDIUM/LOW confidence.
+
 ## Setup
 Requirements: Linux/macOS/Windows with Android Studio (latest stable), JDK 17 (bundled with Studio), Python 3.10+,
 and a real Android phone (Android 8.0+, gyroscope; ARCore support for ARCore/Benchmark modes). Emulators can't be used, because they have no real IMU/camera.
 Step-by-step: [docs/Implementation.md → Before you start](docs/Implementation.md#before-you-start).
 
 ```bash
-export JAVA_HOME=/opt/android-studio/jbr          # adjust to your install
+# JDK 17 is pinned in gradle.properties (org.gradle.java.home); adjust it on another machine
 echo "sdk.dir=$HOME/Android/Sdk" > local.properties
 python3 -m venv .venv && . .venv/bin/activate && pip install -r tools/requirements.txt
 ```

@@ -32,6 +32,8 @@ class CameraXFrameSource(
     private val analysisSize: Size,
     private val timeOffsetNs: Long,
     private val analysisExecutor: Executor,
+    /** true = focus locked at infinity (best geometric accuracy, blurry < ~1 m); false = continuous video AF. */
+    private val lockFocusInfinity: Boolean = false,
 ) {
     private var provider: ProcessCameraProvider? = null
     @Volatile private var clockOffsetNs = 0L
@@ -55,8 +57,12 @@ class CameraXFrameSource(
                     .build()
                 val ab = ImageAnalysis.Builder().setResolutionSelector(res)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                // Preview: sharp 4:3 stream for the user (same FOV as the analysis stream).
                 val pb = Preview.Builder().setResolutionSelector(
-                    ResolutionSelector.Builder().setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY).build(),
+                    ResolutionSelector.Builder()
+                        .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
+                        .setResolutionStrategy(ResolutionStrategy(PREVIEW_SIZE, ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER))
+                        .build(),
                 )
                 applyCaptureOptions(Camera2Interop.Extender(ab))
                 applyCaptureOptions(Camera2Interop.Extender(pb))
@@ -95,8 +101,13 @@ class CameraXFrameSource(
     private fun <T> applyCaptureOptions(e: Camera2Interop.Extender<T>) {
         e.setCaptureRequestOption(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, CameraMetadata.LENS_OPTICAL_STABILIZATION_MODE_OFF)
         e.setCaptureRequestOption(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF)
-        e.setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
-        e.setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0f) // infinity; ignored by fixed-focus lenses
+        if (lockFocusInfinity) {
+            e.setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
+            e.setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0f) // infinity; ignored by fixed-focus lenses
+        } else {
+            // Smooth continuous AF: sharp image at any distance; focus breathing changes FOV by ~1% (ADR-024).
+            e.setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+        }
     }
 
     /** Main thread. */
@@ -107,5 +118,6 @@ class CameraXFrameSource(
 
     companion object {
         private const val TAG = "CamIMU.Camera"
+        private val PREVIEW_SIZE = Size(1440, 1080)
     }
 }

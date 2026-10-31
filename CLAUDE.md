@@ -38,6 +38,8 @@ Full spec: `project.md`. Build plan: `docs/Implementation.md` (the main file).
 ./gradlew :app:connectedDebugAndroidTest  # instrumented tests (needs phone) [DEVICE]
 ./gradlew :replay:run --args="--session <dir> --config <json> --out <dir>"   # offline replay
 python3 tools/analyze_log.py <session_dir>   # metrics + plots (venv: tools/requirements.txt)
+./gradlew :replay:run --args="--synthesize sessions/SYNTH"   # synthetic session with known truth (no phone)
+./gradlew :app:recordPaparazziDebug      # render all screens to PNG (app/src/test/snapshots/images → docs/screenshots)
 adb logcat -s CamIMU                       # app logs (all tags start with CamIMU)
 ```
 

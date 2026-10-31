@@ -1,0 +1,1 @@
+OK: no forbidden sensor APIs in app/src core/src replay/src

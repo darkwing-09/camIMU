@@ -109,6 +109,11 @@ and red #FF3B30 for MEDIUM/LOW confidence. Monospace typography throughout.
 `frame.timestamp` is tested against elapsedRealtime, then System.nanoTime, on the first CPU image. The fallback is arrival − 40 ms. Any residual constant
 goes into `calibration.json` `arcoreTimeOffsetNs` (estimate with `estimate_time_offset.py` on a BENCHMARK recording).
 
+**ADR-024 — Continuous video autofocus by default; sharper preview.** *Accepted (2026-10-31, after the first on-device test).*
+Context: on a vivo I2214 the preview looked very poor. Cause: AF was forced OFF at infinity, which some devices don't honour (the lens parks near macro, so everything is blurry), and the preview had no target resolution.
+Decision: `CONTROL_AF_MODE_CONTINUOUS_VIDEO` by default, and preview targets 1440×1080 (4:3, same FOV as the analysis stream). Settings toggle `lockFocusInfinity` restores fixed focus. The Calibrate screen always locks focus, so intrinsics are measured at the same focus as locked runs.
+Consequences: focus breathing changes the FOV by about 1%, a small scale error that the gyro-bias Kalman filter tolerates. OIS/EIS stay off, so the preview may look slightly shaky; that is intentional.
+
 ---
 
 ## Council summary (Step 1, kept for reference)

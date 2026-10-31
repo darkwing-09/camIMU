@@ -37,8 +37,23 @@ import kotlin.math.roundToInt
 @Composable
 fun SettingsScreen(deps: AppDeps, onBack: () -> Unit) {
     val ctx = LocalContext.current
-    var est by remember { mutableStateOf(deps.settings.estimator()) }
-    var vis by remember { mutableStateOf(deps.settings.vision()) }
+    SettingsContent(
+        initialEst = deps.settings.estimator(), initialVis = deps.settings.vision(),
+        calibrationStatus = deps.calibration.load().status, calibrationPath = deps.calibration.file.absolutePath,
+        sessionsPath = OrientationSession.sessionsRoot(ctx).absolutePath, packageName = ctx.packageName,
+        onSave = { e, v -> deps.settings.save(e, v) }, onDefaults = { deps.settings.resetToDefaults() }, onBack = onBack,
+    )
+}
+
+/** Stateless settings layout (also used for screenshots). */
+@Composable
+fun SettingsContent(
+    initialEst: EstimatorConfig, initialVis: VisionConfig, calibrationStatus: String, calibrationPath: String,
+    sessionsPath: String, packageName: String, onSave: (EstimatorConfig, VisionConfig) -> Unit, onDefaults: () -> Unit,
+    onBack: () -> Unit,
+) {
+    var est by remember { mutableStateOf(initialEst) }
+    var vis by remember { mutableStateOf(initialVis) }
     var saved by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize()) {
         TopBar("SETTINGS", onBack)
@@ -66,23 +81,28 @@ fun SettingsScreen(deps: AppDeps, onBack: () -> Unit) {
                 Switch(vis.debugOverlay, { vis = vis.copy(debugOverlay = it) },
                     colors = SwitchDefaults.colors(checkedThumbColor = Hud.Green, checkedTrackColor = Hud.Border))
             }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Lock focus at infinity (accuracy > sharpness)", color = Hud.Text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                Switch(vis.lockFocusInfinity, { vis = vis.copy(lockFocusInfinity = it) },
+                    colors = SwitchDefaults.colors(checkedThumbColor = Hud.Green, checkedTrackColor = Hud.Border))
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 HudButton("SAVE", {
-                    runCatching { deps.settings.save(est, vis) }
+                    runCatching { onSave(est, vis) }
                         .onSuccess { saved = "saved — applies to the next session" }
                         .onFailure { saved = "invalid: ${it.message}" }
                 }, Modifier.weight(1f))
                 HudButton("DEFAULTS", {
-                    deps.settings.resetToDefaults(); est = EstimatorConfig(); vis = VisionConfig(); saved = "defaults restored"
+                    onDefaults(); est = EstimatorConfig(); vis = VisionConfig(); saved = "defaults restored"
                 }, Modifier.weight(1f), color = Hud.Amber)
             }
             if (saved.isNotEmpty()) DebugLine(saved)
             Section("CALIBRATION")
-            DebugLine(deps.calibration.load().status)
-            DebugLine("file: ${deps.calibration.file.absolutePath}")
+            DebugLine(calibrationStatus)
+            DebugLine("file: $calibrationPath")
             Section("RECORDINGS")
-            DebugLine(OrientationSession.sessionsRoot(ctx).absolutePath)
-            DebugLine("adb pull /sdcard/Android/data/${ctx.packageName}/files/sessions/ ./sessions/")
+            DebugLine(sessionsPath)
+            DebugLine("adb pull /sdcard/Android/data/$packageName/files/sessions/ ./sessions/")
             Section("NO-COMPASS GUARANTEE")
             DebugLine("Registered sensors: gyroscope (uncalibrated) + accelerometer only.")
             DebugLine("Each session's meta.json lists registeredSensorTypes.")

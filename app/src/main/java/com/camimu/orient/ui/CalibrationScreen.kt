@@ -63,7 +63,7 @@ fun CalibrationScreen(deps: AppDeps, onBack: () -> Unit) {
         }
     }
     DisposableEffect(Unit) {
-        val src = CameraXFrameSource(ctx, owner, previewView, Size(vcfg.analysisWidth, vcfg.analysisHeight), 0L, exec)
+        val src = CameraXFrameSource(ctx, owner, previewView, Size(vcfg.analysisWidth, vcfg.analysisHeight), 0L, exec, lockFocusInfinity = true)
         src.start(
             onInfo = { info = "sensor orientation ${it.sensorOrientationDeg}°, OIS ${it.oisAvailable}, ts ${it.timestampSourceName}" },
             onFrame = { f ->

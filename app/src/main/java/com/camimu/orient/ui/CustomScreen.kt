@@ -72,7 +72,7 @@ fun CustomScreen(mode: AppMode, deps: AppDeps, onBack: () -> Unit) {
             val exec = Executor { r ->
                 try { session.visionExecutor.execute(r) } catch (_: RejectedExecutionException) { /* session stopping */ }
             }
-            val src = CameraXFrameSource(ctx, lifecycleOwner, previewView, Size(vcfg.analysisWidth, vcfg.analysisHeight), calib.data.timeOffsetNs, exec)
+            val src = CameraXFrameSource(ctx, lifecycleOwner, previewView, Size(vcfg.analysisWidth, vcfg.analysisHeight), calib.data.timeOffsetNs, exec, vcfg.lockFocusInfinity)
             src.start(onInfo = { session.cameraInfo = it }, onFrame = { session.onFrame(it) }, onError = { cameraError = it })
             onDispose { src.stop() }
         }

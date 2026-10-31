@@ -25,6 +25,11 @@ class AppDeps(val settings: SettingsRepository, val calibration: CalibrationStor
 fun CamImuApp() {
     val ctx = LocalContext.current.applicationContext
     val deps = remember { AppDeps(SettingsRepository(ctx), CalibrationStore(ctx)) }
+    var showSplash by rememberSaveable { mutableStateOf(true) }
+    if (showSplash) {
+        SplashScreen(onDone = { showSplash = false })
+        return
+    }
     var screen by rememberSaveable { mutableStateOf(AppScreen.HOME) }
     val back = { screen = AppScreen.HOME }
     BackHandler(enabled = screen != AppScreen.HOME) { back() }

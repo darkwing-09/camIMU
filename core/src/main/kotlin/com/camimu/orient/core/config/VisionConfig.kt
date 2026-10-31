@@ -36,6 +36,8 @@ data class VisionConfig(
     val minImageStd: Double = 8.0,
     val occlusionDebounceSec: Double = 0.5,
     val debugOverlay: Boolean = true,
+    /** Lock focus at infinity (more accurate, blurry for near objects) instead of continuous AF. */
+    val lockFocusInfinity: Boolean = false,
 ) {
     init {
         require(analysisWidth > 0 && analysisHeight > 0)
