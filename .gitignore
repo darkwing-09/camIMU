@@ -1,0 +1,14 @@
+.gradle/
+build/
+*/build/
+local.properties
+.idea/
+*.iml
+.venv/
+captures/
+.externalNativeBuild/
+.cxx/
+sessions/
+tuning/
+*.apk
+__pycache__/
